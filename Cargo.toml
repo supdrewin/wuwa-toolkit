@@ -1,6 +1,6 @@
 [package]
 name = "wuwa-beta-downloader"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Alvin Null <supdrewin@outlook.com>"]
 edition = "2021"
 description = "WuWa Beta Downloader powered by Rust"
@@ -10,6 +10,7 @@ license = "MIT"
 [dependencies]
 base16ct = { version = "0.2.0", features = ["std"] }
 clap = { version = "4.5.22", features = ["derive"] }
+console = "0.15.8"
 futures-util = "0.3.31"
 indicatif = "0.17.9"
 md-5 = "0.10.6"
