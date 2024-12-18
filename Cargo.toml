@@ -1,9 +1,9 @@
 [package]
-name = "wuwa-beta-downloader"
-version = "0.2.0"
+name = "wuwa-downloader"
+version = "0.3.0"
 authors = ["Alvin Null <supdrewin@outlook.com>"]
 edition = "2021"
-description = "WuWa Beta Downloader powered by Rust"
+description = "WuWa Downloader powered by Rust"
 repository = "https://github.com/supdrewin/wuwa-beta-downloader/"
 license = "MIT"
 

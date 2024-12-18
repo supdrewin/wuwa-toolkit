@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 env:
-  BINARY: wuwa-beta-downloader.exe
+  BINARY: wuwa-downloader.exe
   CARGO_TERM_COLOR: always
 
 jobs:

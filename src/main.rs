@@ -10,7 +10,7 @@ use std::{
 };
 
 use base16ct::lower;
-use clap::Parser;
+use clap::{ArgAction::Count, Parser};
 use console::Term;
 use futures_util::StreamExt;
 use indicatif::{MultiProgress, ProgressBar, ProgressState, ProgressStyle};
@@ -21,8 +21,11 @@ use tokio::{fs::File, io::AsyncWriteExt, sync::Mutex};
 type Result<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
 
 #[rustfmt::skip]
-const STYLE: &str = "{spinner:.green} {item:40} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes}";
-const URL: &str = "https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10008_Pa0Q0EMFxukjEqX33pF9Uyvdc8MaGPSz/index.json";
+const STYLE: &str = r"{spinner:.green} {item:40} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes}";
+const URL: [&str; 2] = [
+    r"https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10003_Y8xXrXk65DqFHEDgApn3cpK5lfczpFx5/index.json",
+    r"https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10008_Pa0Q0EMFxukjEqX33pF9Uyvdc8MaGPSz/index.json",
+];
 
 #[derive(Parser)]
 #[command(version)]
@@ -35,6 +38,9 @@ struct Cli {
 
     #[arg(short, long, value_name = "DIR")]
     path: Option<PathBuf>,
+
+    #[arg(short, long, action = Count)]
+    beta: usize,
 }
 
 #[tokio::main]
@@ -52,7 +58,7 @@ async fn main() -> Result<()> {
 
     let mut handles = vec![];
 
-    let index = reqwest::get(URL).await?.json::<Value>().await?;
+    let index = reqwest::get(URL[cli.beta]).await?.json::<Value>().await?;
 
     let path = index["default"]["resources"].as_str().unwrap();
     let base = index["default"]["resourcesBasePath"].as_str().unwrap();
