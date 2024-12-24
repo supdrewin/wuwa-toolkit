@@ -15,30 +15,26 @@ use console::Term;
 use futures_util::StreamExt;
 use indicatif::{MultiProgress, ProgressBar, ProgressState, ProgressStyle};
 use md5::{Digest, Md5};
-use serde_json::Value;
 use tokio::{fs::File, io::AsyncWriteExt, sync::Mutex};
+use wuwa_downloader::json::{index::IndexJson, resource::ResourceJson};
 
 type Result<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
 
-#[rustfmt::skip]
-const STYLE: &str = r"{spinner:.green} {item:40} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes}";
-const URL: [&str; 2] = [
-    r"https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10003_Y8xXrXk65DqFHEDgApn3cpK5lfczpFx5/index.json",
-    r"https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10008_Pa0Q0EMFxukjEqX33pF9Uyvdc8MaGPSz/index.json",
+const PROGRESS_STYLE: &str = r"{spinner:.green} {file_name:40} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes}";
+const INDEX_JSON_URL: [&str; 2] = [
+    r"https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10003_Y8xXrXk65DqFHEDgApn3cpK5lfczpFx5/index.json", // CN LIVE
+    r"https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10008_Pa0Q0EMFxukjEqX33pF9Uyvdc8MaGPSz/index.json", // CN BETA
 ];
 
 #[derive(Parser)]
 #[command(version)]
 struct Cli {
-    #[arg(short, long, value_name = "IDX")]
+    #[arg(short, long, value_name = "INDEX")]
     mirror: Option<usize>,
-
-    #[arg(short, long, value_name = "NUM")]
+    #[arg(short, long, value_name = "COUNT")]
     threads: Option<usize>,
-
     #[arg(short, long, value_name = "DIR")]
     path: Option<PathBuf>,
-
     #[arg(short, long, action = Count)]
     beta: usize,
 }
@@ -53,110 +49,105 @@ async fn main() -> Result<()> {
             .unwrap_or(num_cpus::get()),
     ));
 
-    let dir = Arc::new(cli.path.unwrap_or(env::current_dir()?));
-    let bars = Arc::new(Mutex::new(MultiProgress::new()));
+    let dest_dir = Arc::new(cli.path.unwrap_or(env::current_dir()?));
+    let multi_progress = Arc::new(Mutex::new(MultiProgress::new()));
+
+    let index_json = reqwest::get(INDEX_JSON_URL[cli.beta])
+        .await?
+        .json::<IndexJson>()
+        .await?;
+
+    let resources = &index_json.default.resources;
+    let base_path = &index_json.default.resources_base_path;
+
+    let host = &index_json
+        .default
+        .cdn_list
+        .get(cli.mirror.unwrap_or_default())
+        .unwrap_or(&index_json.default.cdn_list[0])
+        .url;
+
+    let resource_json = reqwest::get(format!("{host}/{resources}"))
+        .await?
+        .json::<ResourceJson>()
+        .await?;
 
     let mut handles = vec![];
 
-    let index = reqwest::get(URL[cli.beta]).await?.json::<Value>().await?;
-
-    let path = index["default"]["resources"].as_str().unwrap();
-    let base = index["default"]["resourcesBasePath"].as_str().unwrap();
-    let hosts = &index["default"]["cdnList"];
-
-    let host = hosts[cli.mirror.unwrap_or_default()]["url"]
-        .as_str()
-        .unwrap_or(hosts[0]["url"].as_str().unwrap());
-
-    let resources = reqwest::get(format!("{host}{path}"))
-        .await?
-        .json::<Value>()
-        .await?;
-
-    let verify = |path: &Path, md5: &str| -> Result<bool> {
-        let mut file = fs::File::open(&path)?;
-        let mut hasher = Md5::new();
-
-        io::copy(&mut file, &mut hasher)?;
-        let hash = hasher.finalize();
-
-        Ok(lower::encode_string(&hash).eq(md5))
-    };
-
-    for resource in resources["resource"].as_array().unwrap() {
+    for resource in resource_json.resource {
         let threads = Arc::clone(&threads);
-        let dir = Arc::clone(&dir);
-        let bars = Arc::clone(&bars);
+        let dest_dir = Arc::clone(&dest_dir);
+        let multi_progress = Arc::clone(&multi_progress);
 
-        let dest = resource["dest"].as_str().unwrap().to_string();
-        let md5 = resource["md5"].as_str().unwrap().to_string();
-        let size = resource["size"].as_u64().unwrap();
-
-        let url = format!("{host}{base}{dest}");
+        let dest = resource.dest;
+        let download_url = format!("{host}/{base_path}/{dest}");
 
         while {
-            thread::sleep(Duration::from_millis(1));
             let mut threads = threads.lock().await;
 
-            match *threads {
-                0 => true,
-                _ => {
-                    *threads -= 1;
-                    false
-                }
-            }
-        } {}
+            threads.checked_sub(1).is_none_or(|t| {
+                *threads = t;
+                false
+            })
+        } {
+            thread::sleep(Duration::from_millis(1));
+        }
 
         handles.push(tokio::spawn(async move {
-            let mut downloaded = false;
+            let dest_dir = dest_dir.display();
 
-            let path = format!("{}/Wuthering Waves Game{dest}", dir.display());
-            let path = Path::new(&path);
+            let file_path = format!("{dest_dir}/Wuthering Waves Game/{dest}");
+            let file_path = Path::new(&file_path);
 
-            let item = path.file_name().unwrap().to_str().unwrap().to_string();
+            let file_name = file_path.file_name().unwrap().to_str().unwrap().to_string();
 
-            let bar = {
-                let bars = bars.lock().await;
-                bars.add(ProgressBar::new(size))
+            let pb = {
+                let mp = multi_progress.lock().await;
+                mp.add(ProgressBar::new(resource.size))
             };
 
-            bar.set_style(
-                ProgressStyle::with_template(STYLE)?
-                    .with_key("item", move |_: &ProgressState, w: &mut dyn Write| {
-                        write!(w, "{item}").unwrap()
+            pb.set_style(
+                ProgressStyle::with_template(PROGRESS_STYLE)?
+                    .with_key("file_name", move |_: &ProgressState, w: &mut dyn Write| {
+                        write!(w, "{file_name}").unwrap()
                     })
                     .progress_chars("##-"),
             );
 
-            fs::create_dir_all(path.parent().unwrap())?;
+            fs::create_dir_all(file_path.parent().unwrap())?;
 
-            if fs::exists(path)? {
-                bar.set_position(size);
+            while match (|| {
+                let mut file = fs::File::open(&file_path)?;
+                let mut hasher = Md5::new();
 
-                if !md5.is_empty() {
-                    downloaded = verify(path, &md5)?;
-                }
-            }
+                pb.set_position(resource.size);
+                io::copy(&mut file, &mut hasher)?; // FIXME
 
-            while !downloaded {
-                bar.set_position(0);
+                let hash = hasher.finalize();
+                let hash = lower::encode_string(&hash);
 
-                let mut file = File::create(path).await?;
-                let mut stream = reqwest::get(&url).await?.bytes_stream();
+                Result::Ok(hash.eq(&resource.md5))
+            })() {
+                Ok(downloaded) => !downloaded,
+                Err(_) => true,
+            } {
+                pb.set_position(0);
+
+                let mut file = File::create(file_path).await?;
+                let mut stream = reqwest::get(&download_url).await?.bytes_stream();
 
                 while let Some(chunk) = stream.next().await {
                     let chunk = chunk?;
 
                     file.write_all(&chunk).await?;
-                    bar.inc(chunk.len() as u64);
+                    pb.inc(chunk.len() as u64);
                 }
 
                 file.flush().await?;
-                downloaded = verify(path, &md5)?;
             }
 
             *threads.lock().await += 1;
-            Result::Ok(bar.finish())
+            Result::Ok(pb.finish())
         }));
     }
 

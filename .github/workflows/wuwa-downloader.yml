@@ -1,0 +1,30 @@
+name: wuwa-downloader
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  BINARY_FILE: wuwa-downloader.exe
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cargo b -r
+          cp target/release/${{ env.BINARY_FILE }}
+          $(get-filehash ${{ env.BINARY_FILE }}).hash.tolower() > ${{ env.BINARY_FILE }}.sha256
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.BINARY_FILE }}
+            ${{ env.BINARY_FILE }}.sha256
