@@ -1,6 +1,6 @@
-MIT License
+# MIT License
 
-Copyright (c) 2024 Alvin Null
+Copyright (c) 2025 [Alvin Null](https://github.com/supdrewin)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

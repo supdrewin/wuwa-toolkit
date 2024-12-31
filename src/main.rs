@@ -1,47 +1,21 @@
-use std::{
-    env,
-    error::Error,
-    fmt::Write,
-    fs, io,
-    path::{Path, PathBuf},
-    sync::Arc,
-    thread,
-    time::Duration,
-};
+use std::{env, fmt::Write, fs, io, path::Path, sync::Arc, thread, time::Duration};
 
 use base16ct::lower;
-use clap::{ArgAction::Count, Parser};
 use console::Term;
 use futures_util::StreamExt;
 use indicatif::{MultiProgress, ProgressBar, ProgressState, ProgressStyle};
 use md5::{Digest, Md5};
 use tokio::{fs::File, io::AsyncWriteExt, sync::Mutex};
-use wuwa_downloader::json::{index::IndexJson, resource::ResourceJson};
+use wuwa_dl::{
+    json::{index::IndexJson, resource::ResourceJson},
+    util::{Result, INDEX_JSON_URL, PROGRESS_STYLE},
+};
 
-type Result<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
-
-const PROGRESS_STYLE: &str = r"{spinner:.green} {file_name:40} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes}";
-const INDEX_JSON_URL: [&str; 2] = [
-    r"https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10003_Y8xXrXk65DqFHEDgApn3cpK5lfczpFx5/index.json", // CN LIVE
-    r"https://prod-cn-alicdn-gamestarter.kurogame.com/pcstarter/prod/game/G152/10008_Pa0Q0EMFxukjEqX33pF9Uyvdc8MaGPSz/index.json", // CN BETA
-];
-
-#[derive(Parser)]
-#[command(version)]
-struct Cli {
-    #[arg(short, long, value_name = "INDEX")]
-    mirror: Option<usize>,
-    #[arg(short, long, value_name = "COUNT")]
-    threads: Option<usize>,
-    #[arg(short, long, value_name = "DIR")]
-    path: Option<PathBuf>,
-    #[arg(short, long, action = Count)]
-    beta: usize,
-}
+use crate::cli::Cli;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let cli = Cli::parse();
+    let cli = Cli::new();
 
     let threads = Arc::new(Mutex::new(
         cli.threads
@@ -52,10 +26,7 @@ async fn main() -> Result<()> {
     let dest_dir = Arc::new(cli.path.unwrap_or(env::current_dir()?));
     let multi_progress = Arc::new(Mutex::new(MultiProgress::new()));
 
-    let index_json = reqwest::get(INDEX_JSON_URL[cli.beta])
-        .await?
-        .json::<IndexJson>()
-        .await?;
+    let index_json = get_response!(index.json, INDEX_JSON_URL[cli.beta]);
 
     let resources = &index_json.default.resources;
     let base_path = &index_json.default.resources_base_path;
@@ -67,10 +38,7 @@ async fn main() -> Result<()> {
         .unwrap_or(&index_json.default.cdn_list[0])
         .url;
 
-    let resource_json = reqwest::get(format!("{host}/{resources}"))
-        .await?
-        .json::<ResourceJson>()
-        .await?;
+    let resource_json = get_response!(resource.json, format!("{host}/{resources}"));
 
     let mut handles = vec![];
 
@@ -160,3 +128,6 @@ async fn main() -> Result<()> {
         Term::read_key(&Term::stdout())?;
     })
 }
+
+mod cli;
+mod util;

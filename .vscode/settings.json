@@ -1,0 +1,5 @@
+{
+    "markdownlint.config": {
+        "heading-increment": false
+    }
+}
