@@ -18,7 +18,7 @@ pub struct IndexJson {
     pub key_file_check_switch: Boolean,
     pub key_file_check_list: Vec<String>,
     pub chunk_download_switch: Boolean,
-    pub fingerprints: Vec<String>,
+    pub fingerprints: Option<Vec<String>>,
     pub resources_gray: Option<ResourcesGray>,
     pub experiment: Experiment,
 }

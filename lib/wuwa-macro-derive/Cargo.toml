@@ -1,9 +1,9 @@
 [package]
 name = "wuwa-macro-derive"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Alvin Null <supdrewin@outlook.com>"]
 edition = "2021"
-description = "WuWa Downloader powered by Rust"
+description = "Derive macros for WuWa Downloader"
 repository = "https://github.com/supdrewin/wuwa-downloader/"
 license = "MIT"
 

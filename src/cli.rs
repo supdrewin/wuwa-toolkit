@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{ArgAction::Count, Parser};
+use clap::{ArgAction::SetTrue, Parser};
 
 #[derive(Parser)]
 #[command(version)]
@@ -11,8 +11,10 @@ pub struct Cli {
     pub threads: Option<usize>,
     #[arg(short, long, value_name = "DIR")]
     pub path: Option<PathBuf>,
-    #[arg(short, long, action = Count)]
-    pub beta: usize,
+    #[arg(short, long, action = SetTrue)]
+    pub global: bool,
+    #[arg(short, long, action = SetTrue)]
+    pub beta: bool,
 }
 
 impl Cli {

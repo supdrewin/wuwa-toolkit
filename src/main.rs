@@ -26,7 +26,10 @@ async fn main() -> Result<()> {
     let dest_dir = Arc::new(cli.path.unwrap_or(env::current_dir()?));
     let multi_progress = Arc::new(Mutex::new(MultiProgress::new()));
 
-    let index_json = get_response!(index.json, INDEX_JSON_URL[cli.beta]);
+    let index_json = get_response!(
+        index.json,
+        INDEX_JSON_URL[((cli.global as usize) << 1) + cli.beta as usize]
+    );
 
     let resources = &index_json.default.resources;
     let base_path = &index_json.default.resources_base_path;
