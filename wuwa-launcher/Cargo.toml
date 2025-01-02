@@ -1,0 +1,10 @@
+[package]
+name = "wuwa-launcher"
+version = "0.0.0"
+authors = ["Alvin Null <supdrewin@outlook.com>"]
+edition = "2021"
+description = "WuWa Launcher written in Rust"
+repository = "https://github.com/supdrewin/wuwa-downloader/"
+license = "MIT"
+
+[dependencies]

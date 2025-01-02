@@ -1810,6 +1810,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "wuwa-launcher"
+version = "0.0.0"
+
+[[package]]
 name = "wuwa-macro-derive"
 version = "0.6.0"
 
