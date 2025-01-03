@@ -1,6 +1,6 @@
 [package]
 name = "wuwa-downloader"
-version = "0.6.0"
+version = "0.6.2"
 authors = ["Alvin Null <supdrewin@outlook.com>"]
 edition = "2021"
 description = "WuWa Downloader written in Rust"
@@ -8,14 +8,14 @@ repository = "https://github.com/supdrewin/wuwa-downloader/"
 license = "MIT"
 
 [dependencies]
-base16ct = { version = "0.2", features = ["std"] }
-clap = { version = "4.5", features = ["derive"] }
-console = "0.15"
-futures-util = "0.3"
-indicatif = "0.17"
-md-5 = "0.10"
-num_cpus = "1.16"
-reqwest = { version = "0.12", features = ["gzip", "json", "stream"] }
-tokio = { version = "1.42", features = ["full"] }
+base16ct.workspace = true
+clap.workspace = true
+console.workspace = true
+futures-util.workspace = true
+indicatif.workspace = true
+md-5.workspace = true
+num_cpus.workspace = true
+reqwest.workspace = true
+tokio.workspace = true
 wuwa-dl.workspace = true
 wuwa-macro-derive.workspace = true

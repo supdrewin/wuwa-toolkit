@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::util::Boolean;
+use crate::utils::Boolean;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

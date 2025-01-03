@@ -1,5 +1,6 @@
+#[macro_use]
+pub mod utils;
 pub mod json;
-pub mod util;
 
 #[cfg(test)]
 mod tests;

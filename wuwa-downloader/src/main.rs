@@ -8,7 +8,7 @@ use md5::{Digest, Md5};
 use tokio::{fs::File, io::AsyncWriteExt, sync::Mutex};
 use wuwa_dl::{
     json::{index::IndexJson, resource::ResourceJson},
-    util::{Result, INDEX_JSON_URL, PROGRESS_STYLE},
+    utils::{Result, INDEX_JSON_URL, PROGRESS_STYLE},
 };
 
 use crate::cli::Cli;
@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
     let dest_dir = Arc::new(cli.path.unwrap_or(env::current_dir()?));
     let multi_progress = Arc::new(Mutex::new(MultiProgress::new()));
 
-    let index_json = get_response!(
+    let index_json = wuwa_dl::get_response!(
         index.json,
         INDEX_JSON_URL[((cli.global as usize) << 1) + cli.beta as usize]
     );
@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
         .unwrap_or(&index_json.default.cdn_list[0])
         .url;
 
-    let resource_json = get_response!(resource.json, format!("{host}/{resources}"));
+    let resource_json = wuwa_dl::get_response!(resource.json, format!("{host}/{resources}"));
 
     let mut handles = vec![];
 
@@ -133,4 +133,3 @@ async fn main() -> Result<()> {
 }
 
 mod cli;
-mod util;
