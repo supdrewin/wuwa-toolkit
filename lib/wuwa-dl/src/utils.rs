@@ -45,3 +45,12 @@ macro_rules! get_response {
         .await?
     };
 }
+
+#[macro_export]
+macro_rules! wait_all {
+    ( $x:expr, $y:expr ) => {
+        for handle in $x {
+            wuwa_macro_derive::n_try!(handle.await, $y);
+        }
+    };
+}

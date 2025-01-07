@@ -1,11 +1,16 @@
-use std::{env, fmt::Write, fs, io, path::Path, sync::Arc, thread, time::Duration};
+use std::{env, fmt::Write, fs, io, path::Path, sync::Arc};
 
 use base16ct::lower;
 use console::Term;
 use futures_util::StreamExt;
 use indicatif::{MultiProgress, ProgressBar, ProgressState, ProgressStyle};
 use md5::{Digest, Md5};
-use tokio::{fs::File, io::AsyncWriteExt, sync::Mutex};
+use tokio::{
+    fs::File,
+    io::AsyncWriteExt,
+    sync::Mutex,
+    time::{self, Duration},
+};
 use wuwa_dl::{
     json::{index::IndexJson, resource::ResourceJson},
     utils::{Result, INDEX_JSON_URL, PROGRESS_STYLE},
@@ -54,15 +59,18 @@ async fn main() -> Result<()> {
         let download_url = format!("{host}/{base_path}/{dest}");
 
         while {
-            let mut threads = threads.lock().await;
+            time::sleep(Duration::from_millis(1)).await;
 
-            threads.checked_sub(1).is_none_or(|t| {
-                *threads = t;
-                false
-            })
-        } {
-            thread::sleep(Duration::from_millis(1));
-        }
+            let mut threads = threads.lock().await;
+            let status = threads.checked_sub(1);
+
+            match status {
+                Some(t) => *threads = t,
+                None => (),
+            }
+
+            status.is_none()
+        } {}
 
         handles.push(tokio::spawn(async move {
             let dest_dir = dest_dir.display();
@@ -92,7 +100,7 @@ async fn main() -> Result<()> {
                 let mut hasher = Md5::new();
 
                 pb.set_position(resource.size);
-                io::copy(&mut file, &mut hasher)?; // FIXME
+                io::copy(&mut file, &mut hasher)?;
 
                 let hash = hasher.finalize();
                 let hash = lower::encode_string(&hash);
@@ -122,12 +130,12 @@ async fn main() -> Result<()> {
         }));
     }
 
-    for handle in handles {
-        handle.await??;
-    }
+    wuwa_dl::wait_all!(handles, 2);
 
     Ok({
-        println!("All resources downloaded!");
+        println!("All the resources are downloaded!");
+        println!("Press any key to continue...");
+
         Term::read_key(&Term::stdout())?;
     })
 }

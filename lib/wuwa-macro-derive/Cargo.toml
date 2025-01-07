@@ -1,6 +1,6 @@
 [package]
 name = "wuwa-macro-derive"
-version = "0.6.0"
+version = "0.6.3"
 authors = ["Alvin Null <supdrewin@outlook.com>"]
 edition = "2021"
 description = "Derive macros for WuWa Downloader"
