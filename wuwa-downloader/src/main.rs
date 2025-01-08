@@ -78,7 +78,11 @@ async fn main() -> Result<()> {
             let file_path = format!("{dest_dir}/Wuthering Waves Game/{dest}");
             let file_path = Path::new(&file_path);
 
-            let file_name = file_path.file_name().unwrap().to_str().unwrap().to_string();
+            let file_name = file_path.file_name().unwrap().to_str().unwrap();
+            let file_name = match file_name.len() {
+                0..40 => file_name.to_string(),
+                _ => format!("{}...", &file_name[..36]),
+            };
 
             let pb = {
                 let mp = multi_progress.lock().await;

@@ -29,6 +29,8 @@ macro_rules! get_response {
         {
             use std::{thread, time::Duration};
 
+            println!(stringify!(Getting $x, please wait a minute...));
+
             let mut response;
 
             while {
