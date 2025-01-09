@@ -68,14 +68,15 @@ async fn main() -> Result<()> {
         } {}
 
         handles.push(tokio::spawn(async move {
-            ResourceHelper::new(resource)
+            let result = ResourceHelper::new(resource)
                 .with_progress_bar()
                 .with_multi_progress(mp)
                 .await
                 .download(&base_url, dest_dir.to_str().unwrap())
-                .await?;
+                .await;
 
-            Result::Ok(*threads.lock().await += 1)
+            *threads.lock().await += 1;
+            result
         }));
     }
 
