@@ -68,19 +68,23 @@ async fn main() -> Result<()> {
         } {}
 
         handles.push(tokio::spawn(async move {
-            let result = ResourceHelper::new(resource)
+            let helper = ResourceHelper::new(resource)
                 .with_progress_bar()
                 .with_multi_progress(mp)
-                .await
-                .download(&base_url, dest_dir.to_str().unwrap())
                 .await;
 
+            let mut result;
+
+            while {
+                result = helper.download(&base_url, dest_dir.to_str().unwrap()).await;
+                result.is_err()
+            } {}
+
             *threads.lock().await += 1;
-            result
         }));
     }
 
-    wuwa_dl::wait_all!(handles, 2);
+    wuwa_dl::wait_all!(handles, 1);
 
     Ok({
         println!("All the resources are downloaded!");
