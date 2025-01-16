@@ -21,14 +21,21 @@ pub trait AsBoolean {
     }
 }
 
+pub trait Volatile {
+    fn volatile(self) -> Self
+    where
+        Self: Sized,
+    {
+        self
+    }
+}
+
 impl AsBoolean for Boolean {}
 
 #[macro_export]
 macro_rules! get_response {
     ( $x:expr, $y:expr ) => {
         {
-            use std::{thread, time::Duration};
-
             println!(stringify!(Getting $x, please wait a minute...));
 
             let mut response;
@@ -38,7 +45,6 @@ macro_rules! get_response {
                 response.is_err()
             } {
                 println!(stringify!(Failed to get $x, retrying...));
-                thread::sleep(Duration::from_secs(1));
             }
 
             response?
@@ -54,5 +60,23 @@ macro_rules! wait_all {
         for handle in $x {
             wuwa_macro_derive::n_try!(handle.await, $y);
         }
+    };
+}
+
+#[macro_export]
+macro_rules! while_err {
+    { $x:block } => {
+        while {
+            $x.is_err()
+        } {}
+    };
+}
+
+#[macro_export]
+macro_rules! while_none {
+    { $x:block } => {
+        while {
+            $x.is_none()
+        } {}
     };
 }

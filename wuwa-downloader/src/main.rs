@@ -2,14 +2,12 @@ use std::{env, sync::Arc};
 
 use console::Term;
 use indicatif::MultiProgress;
-use tokio::{
-    sync::Mutex,
-    time::{self, Duration},
-};
+use tokio::sync::Mutex;
 use wuwa_dl::{
     helper::ResourceHelper,
     json::{index::IndexJson, resource::ResourceJson},
-    utils::{Result, INDEX_JSON_URL},
+    pool::Pool,
+    utils::{Result, Volatile, INDEX_JSON_URL},
 };
 
 use crate::cli::Cli;
@@ -18,14 +16,14 @@ use crate::cli::Cli;
 async fn main() -> Result<()> {
     let cli = Cli::new();
 
-    let threads = Arc::new(Mutex::new(
+    let pool = Pool::new(
         cli.threads
             .and_then(|t| Some(usize::min(t, num_cpus::get())))
             .unwrap_or(num_cpus::get()),
-    ));
+    );
 
     let dest_dir = Arc::new(cli.path.unwrap_or(env::current_dir()?));
-    let multi_progress = Arc::new(Mutex::new(MultiProgress::new()));
+    let mp = Arc::new(Mutex::new(MultiProgress::new()));
 
     let index_json = wuwa_dl::get_response!(
         index.json,
@@ -47,40 +45,23 @@ async fn main() -> Result<()> {
     let mut handles = vec![];
 
     for resource in resource_json.resource {
-        let threads = Arc::clone(&threads);
-        let mp = Arc::clone(&multi_progress);
+        let pool = pool.attach();
+        let mp = mp.clone();
 
-        let dest_dir = Arc::clone(&dest_dir);
+        let dest_dir = dest_dir.clone();
         let base_url = format!("{host}/{base_path}");
 
-        while {
-            time::sleep(Duration::from_millis(1)).await;
-
-            let mut threads = threads.lock().await;
-            let status = threads.checked_sub(1);
-
-            match status {
-                Some(t) => *threads = t,
-                None => (),
-            }
-
-            status.is_none()
-        } {}
-
         handles.push(tokio::spawn(async move {
+            pool.volatile();
+
             let helper = ResourceHelper::new(resource)
                 .with_progress_bar()
                 .with_multi_progress(mp)
                 .await;
 
-            let mut result;
-
-            while {
-                result = helper.download(&base_url, dest_dir.to_str().unwrap()).await;
-                result.is_err()
-            } {}
-
-            *threads.lock().await += 1;
+            wuwa_dl::while_err! {{
+                helper.download(&base_url, dest_dir.to_str().unwrap()).await
+            }}
         }));
     }
 
