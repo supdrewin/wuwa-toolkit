@@ -1,6 +1,6 @@
 [package]
 name = "wuwa-downloader"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Alvin Null <supdrewin@outlook.com>"]
 edition = "2021"
 description = "WuWa Downloader written in Rust"

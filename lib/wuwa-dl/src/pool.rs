@@ -1,16 +1,9 @@
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-    time::Duration,
-};
+use std::{ops::Deref, sync::Arc, time::Duration};
 
-use crate::utils::Volatile;
+use tokio::{sync::Mutex, time};
 
+#[derive(Clone)]
 pub struct Pool {
-    count: Arc<Mutex<usize>>,
-}
-
-pub struct PoolGuard {
     count: Arc<Mutex<usize>>,
 }
 
@@ -20,31 +13,35 @@ impl Pool {
         Self { count }
     }
 
-    pub fn attach(&self) -> PoolGuard {
-        let count = self.count.clone();
+    pub async fn attach(&self) -> Self {
+        let pool = self.clone();
 
         while_none! {{
-            thread::sleep(Duration::from_millis(1));
+            time::sleep(Duration::from_millis(20)).await;
 
-            let mut count = count.lock().unwrap();
+            let mut count = pool.lock().await;
             let status = count.checked_sub(1);
 
             match status {
-                Some(t) => *count = t,
+                Some(c) => *count = c,
                 None => (),
             }
 
             status
         }}
 
-        PoolGuard { count }
+        pool
+    }
+
+    pub async fn detattch(&self) {
+        *self.lock().await += 1;
     }
 }
 
-impl Volatile for PoolGuard {}
+impl Deref for Pool {
+    type Target = Arc<Mutex<usize>>;
 
-impl Drop for PoolGuard {
-    fn drop(&mut self) {
-        *self.count.lock().unwrap() += 1;
+    fn deref(&self) -> &Self::Target {
+        &self.count
     }
 }

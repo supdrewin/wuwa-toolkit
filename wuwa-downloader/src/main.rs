@@ -2,12 +2,11 @@ use std::{env, sync::Arc};
 
 use console::Term;
 use indicatif::MultiProgress;
-use tokio::sync::Mutex;
 use wuwa_dl::{
     helper::ResourceHelper,
     json::{index::IndexJson, resource::ResourceJson},
     pool::Pool,
-    utils::{Result, Volatile, INDEX_JSON_URL},
+    utils::{Result, INDEX_JSON_URL},
 };
 
 use crate::cli::Cli;
@@ -23,7 +22,7 @@ async fn main() -> Result<()> {
     );
 
     let dest_dir = Arc::new(cli.path.unwrap_or(env::current_dir()?));
-    let mp = Arc::new(Mutex::new(MultiProgress::new()));
+    let mp = MultiProgress::new();
 
     let index_json = wuwa_dl::get_response!(
         index.json,
@@ -45,15 +44,13 @@ async fn main() -> Result<()> {
     let mut handles = vec![];
 
     for resource in resource_json.resource {
-        let pool = pool.attach();
+        let pool = pool.attach().await;
         let mp = mp.clone();
 
         let dest_dir = dest_dir.clone();
         let base_url = format!("{host}/{base_path}");
 
         handles.push(tokio::spawn(async move {
-            pool.volatile();
-
             let helper = ResourceHelper::new(resource)
                 .with_progress_bar()
                 .with_multi_progress(mp)
@@ -62,6 +59,8 @@ async fn main() -> Result<()> {
             wuwa_dl::while_err! {{
                 helper.download(&base_url, dest_dir.to_str().unwrap()).await
             }}
+
+            pool.detattch().await;
         }));
     }
 

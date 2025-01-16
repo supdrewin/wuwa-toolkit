@@ -1,4 +1,4 @@
-use std::{fmt::Write, io, ops::Deref, path::Path, sync::Arc};
+use std::{fmt::Write, io, ops::Deref, path::Path, time::Duration};
 
 use base16ct::lower;
 use futures_util::StreamExt;
@@ -7,7 +7,6 @@ use md5::{Digest, Md5};
 use tokio::{
     fs::{self, File},
     io::AsyncWriteExt,
-    sync::Mutex,
 };
 
 use crate::{
@@ -17,7 +16,7 @@ use crate::{
 
 pub struct ResourceHelper {
     inner: Resource,
-    pb: Mutex<Option<ProgressBar>>,
+    pb: Option<ProgressBar>,
 }
 
 impl Deref for ResourceHelper {
@@ -30,8 +29,7 @@ impl Deref for ResourceHelper {
 
 impl ResourceHelper {
     pub fn new(inner: Resource) -> Self {
-        let pb = Mutex::new(None);
-        Self { inner, pb }
+        Self { inner, pb: None }
     }
 
     pub fn with_progress_bar(self) -> Self {
@@ -55,18 +53,13 @@ impl ResourceHelper {
 
         pb.set_style(style);
 
-        Self {
-            inner,
-            pb: Mutex::new(Some(pb)),
-        }
+        let pb = Some(pb);
+        Self { inner, pb }
     }
 
-    pub async fn with_multi_progress(self, mp: Arc<Mutex<MultiProgress>>) -> Self {
+    pub async fn with_multi_progress(self, mp: MultiProgress) -> Self {
         let Self { inner, pb } = self;
-        let mp = mp.lock().await;
-
-        let pb = pb.into_inner().and_then(|pb| Some(mp.add(pb)));
-        let pb = Mutex::new(pb);
+        let pb = pb.and_then(|pb| Some(mp.add(pb)));
 
         Self { inner, pb }
     }
@@ -107,17 +100,23 @@ impl ResourceHelper {
         let mut file = File::open(&file_path).await?.into_std().await;
         let mut hasher = Md5::new();
 
-        self.pb(|pb| pb.set_position(self.size)).await;
+        self.pb(|pb| {
+            pb.enable_steady_tick(Duration::from_millis(20));
+            pb.set_position(self.size);
+        })
+        .await;
+
         io::copy(&mut file, &mut hasher)?;
 
         let hash = hasher.finalize();
         let hash = lower::encode_string(&hash);
 
+        self.pb(|pb| pb.disable_steady_tick()).await;
         Result::Ok(hash.eq(&self.md5))
     }
 
     async fn pb<F: FnOnce(&ProgressBar) -> ()>(&self, op: F) {
-        match self.pb.lock().await.deref() {
+        match &self.pb {
             Some(pb) => op(pb),
             None => (),
         }
