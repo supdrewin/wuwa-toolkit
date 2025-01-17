@@ -93,7 +93,7 @@ impl ResourceHelper {
             file.flush().await?;
         }
 
-        Result::Ok(self.pb(|pb| pb.finish()))
+        Ok(self.pb(|pb| pb.finish()))
     }
 
     async fn verify(&self, file_path: &Path) -> Result<bool> {
@@ -101,8 +101,8 @@ impl ResourceHelper {
         let mut hasher = Md5::new();
 
         self.pb(|pb| {
-            pb.enable_steady_tick(Duration::from_millis(20));
             pb.set_position(self.size);
+            pb.enable_steady_tick(Duration::from_millis(20));
         });
 
         io::copy(&mut file, &mut hasher)?;
@@ -111,7 +111,7 @@ impl ResourceHelper {
         let hash = lower::encode_string(&hash);
 
         self.pb(|pb| pb.disable_steady_tick());
-        Result::Ok(hash.eq(&self.md5))
+        Ok(hash.eq(&self.md5))
     }
 
     fn pb<F: FnOnce(&ProgressBar) -> ()>(&self, op: F) {
