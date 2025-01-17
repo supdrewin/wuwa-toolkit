@@ -53,8 +53,7 @@ async fn main() -> Result<()> {
         handles.push(tokio::spawn(async move {
             let helper = ResourceHelper::new(resource)
                 .with_progress_bar()
-                .with_multi_progress(mp)
-                .await;
+                .with_multi_progress(mp);
 
             wuwa_dl::while_err! {{
                 helper.download(&base_url, dest_dir.to_str().unwrap()).await

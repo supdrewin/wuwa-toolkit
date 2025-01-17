@@ -28,5 +28,4 @@ jobs:
         with:
           files: |
             wuwa-downloader.exe
-            # wuwa-launcher.exe
             sha256sums.txt

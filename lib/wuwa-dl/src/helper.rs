@@ -57,7 +57,7 @@ impl ResourceHelper {
         Self { inner, pb }
     }
 
-    pub async fn with_multi_progress(self, mp: MultiProgress) -> Self {
+    pub fn with_multi_progress(self, mp: MultiProgress) -> Self {
         let Self { inner, pb } = self;
         let pb = pb.and_then(|pb| Some(mp.add(pb)));
 
@@ -76,7 +76,7 @@ impl ResourceHelper {
             Ok(downloaded) => !downloaded,
             Err(_) => true,
         } {
-            self.pb(|pb| pb.set_position(0)).await;
+            self.pb(|pb| pb.set_position(0));
 
             let mut file = File::create(file_path).await?;
             let mut stream = reqwest::get(&format!("{base_url}/{dest}"))
@@ -87,13 +87,13 @@ impl ResourceHelper {
                 let chunk = chunk?;
 
                 file.write_all(&chunk).await?;
-                self.pb(|pb| pb.inc(chunk.len() as u64)).await;
+                self.pb(|pb| pb.inc(chunk.len() as u64));
             }
 
             file.flush().await?;
         }
 
-        Result::Ok(self.pb(|pb| pb.finish()).await)
+        Result::Ok(self.pb(|pb| pb.finish()))
     }
 
     async fn verify(&self, file_path: &Path) -> Result<bool> {
@@ -103,19 +103,18 @@ impl ResourceHelper {
         self.pb(|pb| {
             pb.enable_steady_tick(Duration::from_millis(20));
             pb.set_position(self.size);
-        })
-        .await;
+        });
 
         io::copy(&mut file, &mut hasher)?;
 
         let hash = hasher.finalize();
         let hash = lower::encode_string(&hash);
 
-        self.pb(|pb| pb.disable_steady_tick()).await;
+        self.pb(|pb| pb.disable_steady_tick());
         Result::Ok(hash.eq(&self.md5))
     }
 
-    async fn pb<F: FnOnce(&ProgressBar) -> ()>(&self, op: F) {
+    fn pb<F: FnOnce(&ProgressBar) -> ()>(&self, op: F) {
         match &self.pb {
             Some(pb) => op(pb),
             None => (),
