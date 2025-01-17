@@ -65,12 +65,10 @@ async fn main() -> Result<()> {
 
     wuwa_dl::wait_all!(handles, 1);
 
-    Ok({
-        println!("All the resources are downloaded!");
-        println!("Press any key to continue...");
+    println!("All the resources are downloaded!");
+    println!("Press any key to continue...");
 
-        Term::read_key(&Term::stdout())?;
-    })
+    Ok(Term::stdout().read_key().map(|_| ())?)
 }
 
 mod cli;

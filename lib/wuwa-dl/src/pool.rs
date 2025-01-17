@@ -7,6 +7,14 @@ pub struct Pool {
     count: Arc<Mutex<usize>>,
 }
 
+impl Deref for Pool {
+    type Target = Arc<Mutex<usize>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.count
+    }
+}
+
 impl Pool {
     pub fn new(count: usize) -> Self {
         let count = Arc::new(Mutex::new(count));
@@ -35,13 +43,5 @@ impl Pool {
 
     pub async fn detattch(&self) {
         *self.lock().await += 1;
-    }
-}
-
-impl Deref for Pool {
-    type Target = Arc<Mutex<usize>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.count
     }
 }

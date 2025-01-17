@@ -84,10 +84,7 @@ impl ResourceHelper {
                 .bytes_stream();
 
             while let Some(chunk) = stream.next().await {
-                let chunk = chunk?;
-
-                file.write_all(&chunk).await?;
-                self.pb(|pb| pb.inc(chunk.len() as u64));
+                self.write_bytes(&mut file, &chunk?).await?;
             }
 
             file.flush().await?;
@@ -95,7 +92,9 @@ impl ResourceHelper {
 
         Ok(self.pb(|pb| pb.finish()))
     }
+}
 
+impl ResourceHelper {
     async fn verify(&self, file_path: &Path) -> Result<bool> {
         let mut file = File::open(&file_path).await?.into_std().await;
         let mut hasher = Md5::new();
@@ -112,6 +111,14 @@ impl ResourceHelper {
 
         self.pb(|pb| pb.disable_steady_tick());
         Ok(hash.eq(&self.md5))
+    }
+
+    async fn write_bytes(&self, file: &mut File, chunk: &[u8]) -> Result<()> {
+        file.write_all(&chunk).await?;
+
+        Ok(self.pb(|pb| {
+            pb.inc(chunk.len() as u64);
+        }))
     }
 
     fn pb<F: FnOnce(&ProgressBar) -> ()>(&self, op: F) {
