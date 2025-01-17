@@ -9,7 +9,6 @@ authors = ["Alvin Null <supdrewin@outlook.com>"]
 repository = "https://github.com/supdrewin/wuwa-downloader/"
 
 [workspace.dependencies]
-base16ct = { version = "0.2", features = ["std"] }
 clap = { version = "4.5", features = ["derive"] }
 console = "0.15"
 futures-util = "0.3"

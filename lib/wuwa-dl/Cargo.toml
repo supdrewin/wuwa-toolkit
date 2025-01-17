@@ -8,7 +8,6 @@ repository = "https://github.com/supdrewin/wuwa-downloader/"
 license = "MIT"
 
 [dependencies]
-base16ct.workspace = true
 futures-util.workspace = true
 indicatif.workspace = true
 md-5.workspace = true

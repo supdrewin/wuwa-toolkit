@@ -1,6 +1,5 @@
 use std::{fmt::Write, io, ops::Deref, path::Path, time::Duration};
 
-use base16ct::lower;
 use futures_util::StreamExt;
 use indicatif::{MultiProgress, ProgressBar, ProgressState, ProgressStyle};
 use md5::{Digest, Md5};
@@ -107,10 +106,9 @@ impl ResourceHelper {
         io::copy(&mut file, &mut hasher)?;
 
         let hash = hasher.finalize();
-        let hash = lower::encode_string(&hash);
 
         self.pb(|pb| pb.disable_steady_tick());
-        Ok(hash.eq(&self.md5))
+        Ok(format!("{hash:02x}").eq(&self.md5))
     }
 
     async fn write_bytes(&self, file: &mut File, chunk: &[u8]) -> Result<()> {
