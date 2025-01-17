@@ -65,18 +65,20 @@ macro_rules! wait_all {
 
 #[macro_export]
 macro_rules! while_err {
+    { $x:expr } => {
+        while { $x.is_err() } {}
+    };
     { $x:block } => {
-        while {
-            $x.is_err()
-        } {}
+        while { $x.is_err() } {}
     };
 }
 
 #[macro_export]
 macro_rules! while_none {
+    { $x:expr } => {
+        while { $x.is_none() } {}
+    };
     { $x:block } => {
-        while {
-            $x.is_none()
-        } {}
+        while { $x.is_none() } {}
     };
 }

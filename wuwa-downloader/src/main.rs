@@ -55,9 +55,9 @@ async fn main() -> Result<()> {
                 .with_progress_bar()
                 .with_multi_progress(mp);
 
-            wuwa_dl::while_err! {{
+            wuwa_dl::while_err! {
                 helper.download(&base_url, dest_dir.to_str().unwrap()).await
-            }}
+            };
 
             pool.detattch().await;
         }));
