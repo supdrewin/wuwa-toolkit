@@ -12,9 +12,8 @@ repository = "https://github.com/supdrewin/wuwa-downloader/"
 clap = { version = "4.5", features = ["derive"] }
 console = "0.15"
 futures-util = "0.3"
-indicatif = "0.17"
+indicatif = { git = "https://github.com/console-rs/indicatif" }       # BUG
 md-5 = "0.10"
-num_cpus = "1.16"
 relm4 = { version = "0.9", features = ["libadwaita"] }
 reqwest = { version = "0.12", features = ["gzip", "json", "stream"] }
 serde = { version = "1.0", features = ["derive"] }

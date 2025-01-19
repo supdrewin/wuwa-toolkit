@@ -11,6 +11,11 @@ pub const INDEX_JSON_URL: [&str; 4] = [
 pub type Boolean = u8;
 pub type Result<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
 
+pub enum PoolOp {
+    Attach = -1,
+    Dettach = 1,
+}
+
 pub trait AsBoolean {
     fn as_boolean(self: Self) -> Result<bool>
     where

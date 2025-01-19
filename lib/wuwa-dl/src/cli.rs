@@ -7,12 +7,16 @@ use clap::{ArgAction::SetTrue, Parser};
 pub struct Cli {
     #[arg(short, long, value_name = "INDEX")]
     pub mirror: Option<usize>,
+
     #[arg(short, long, value_name = "NUMBER")]
     pub threads: Option<usize>,
+
     #[arg(short, long, value_name = "DIR")]
     pub path: Option<PathBuf>,
+
     #[arg(short, long, action = SetTrue)]
     pub global: bool,
+
     #[arg(short, long, action = SetTrue)]
     pub beta: bool,
 }

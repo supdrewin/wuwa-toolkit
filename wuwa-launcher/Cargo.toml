@@ -8,3 +8,4 @@ repository = "https://github.com/supdrewin/wuwa-downloader/"
 license = "MIT"
 
 [dependencies]
+relm4.workspace = true

@@ -1,6 +1,6 @@
 [package]
 name = "wuwa-dl"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Alvin Null <supdrewin@outlook.com>"]
 edition = "2021"
 description = "WuWa Download Library written in Rust"
@@ -8,6 +8,7 @@ repository = "https://github.com/supdrewin/wuwa-downloader/"
 license = "MIT"
 
 [dependencies]
+clap.workspace = true
 futures-util.workspace = true
 indicatif.workspace = true
 md-5.workspace = true
