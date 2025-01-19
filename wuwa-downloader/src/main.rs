@@ -16,7 +16,7 @@ fn main() -> Result<()> {
 
     let rt = match cli.threads {
         Some(threads) => rt.worker_threads(threads),
-        _ => &mut rt,
+        None => &mut rt,
     }
     .enable_all()
     .build()?;
@@ -51,11 +51,11 @@ fn main() -> Result<()> {
 
         tokio::spawn(async move {
             while let Some(op) = rx1.recv().await {
-                tx2.send_if_modified(|num| {
-                    let result = num.checked_add_signed(op as isize);
+                tx2.send_if_modified(|threads| {
+                    let result = threads.checked_add_signed(op as isize);
 
                     match result {
-                        Some(n) => *num = n,
+                        Some(t) => *threads = t,
                         None => (),
                     }
 
