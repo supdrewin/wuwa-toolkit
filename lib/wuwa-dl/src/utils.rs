@@ -11,11 +11,6 @@ pub const INDEX_JSON_URL: [&str; 4] = [
 pub type Boolean = u8;
 pub type Result<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
 
-pub enum PoolOp {
-    Attach = -1,
-    Dettach = 1,
-}
-
 pub trait AsBoolean {
     fn as_boolean(self: Self) -> Result<bool>
     where
@@ -39,31 +34,31 @@ impl AsBoolean for Boolean {}
 
 #[macro_export]
 macro_rules! get_response {
-    ( $x:expr, $y:expr ) => {
+    ( $json_name:expr, $json_url:expr ) => {
         {
-            println!(stringify!(Getting $x, please wait a minute...));
+            println!(stringify!(Getting $json_name, please wait a minute...));
 
             let mut response;
 
             while {
-                response = reqwest::get($y).await;
+                response = reqwest::get($json_url).await;
                 response.is_err()
             } {
-                println!(stringify!(Failed to get $x, retrying...));
+                println!(stringify!(Failed to get $json_name, retrying...));
             }
 
             response?
         }
-        .json::<wuwa_macro_derive::json_type!($x)>()
+        .json::<wuwa_macro_derive::json_type!($json_name)>()
         .await?
     };
 }
 
 #[macro_export]
 macro_rules! wait_all {
-    ( $x:expr, $y:expr ) => {
-        for handle in $x {
-            wuwa_macro_derive::n_try!(handle.await, $y);
+    ( $handles:expr, $n:expr ) => {
+        for handle in $handles {
+            wuwa_macro_derive::n_try!(handle.await, $n);
         }
     };
 }

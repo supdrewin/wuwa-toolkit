@@ -7,7 +7,8 @@ use wuwa_dl::{
     cli::Cli,
     helper::ResourceHelper,
     json::{index::IndexJson, resource::ResourceJson},
-    utils::{PoolOp, Result, INDEX_JSON_URL},
+    pool::{Pool, PoolOp},
+    utils::{Result, INDEX_JSON_URL},
 };
 
 fn main() -> Result<()> {
@@ -42,39 +43,18 @@ fn main() -> Result<()> {
 
         let resource_json = wuwa_dl::get_response!(resource.json, format!("{host}/{resources}"));
 
+        let mut pool = Pool::new()?;
         let mut tasks = vec![];
 
-        let (tx1, mut rx1) = tokio::sync::mpsc::channel::<PoolOp>(1);
-        let (tx2, mut rx2) = tokio::sync::watch::channel(0);
-
-        tx2.send(rt.metrics().num_workers() - 1)?;
-
-        tokio::spawn(async move {
-            while let Some(op) = rx1.recv().await {
-                tx2.send_if_modified(|threads| {
-                    let result = threads.checked_add_signed(op as isize);
-
-                    match result {
-                        Some(t) => *threads = t,
-                        None => (),
-                    }
-
-                    result.is_some()
-                });
-            }
-
-            Result::Ok(())
-        });
-
         for resource in resource_json.resource {
-            let mp = mp.clone();
-            let tx1 = tx1.clone();
-
-            rx2.changed().await?;
-            tx1.send(PoolOp::Attach).await?;
-
             let dest_dir = dest_dir.clone();
             let base_url = format!("{host}/{base_path}");
+
+            let sender = pool.sender.clone();
+            let mp = mp.clone();
+
+            pool.watcher.changed().await?;
+            sender.send(PoolOp::Attach).await?;
 
             tasks.push(rt.spawn(async move {
                 let helper = ResourceHelper::new(resource)
@@ -85,7 +65,7 @@ fn main() -> Result<()> {
                     helper.download(&base_url, dest_dir.to_str().unwrap()).await
                 };
 
-                tx1.send(PoolOp::Dettach).await
+                sender.send(PoolOp::Dettach).await
             }));
         }
 

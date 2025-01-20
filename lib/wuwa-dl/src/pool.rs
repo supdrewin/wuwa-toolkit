@@ -1,47 +1,47 @@
-use std::{ops::Deref, sync::Arc, time::Duration};
+use tokio::{
+    runtime::Handle,
+    sync::{
+        mpsc::{self, Sender},
+        watch::{self, Receiver},
+    },
+};
 
-use tokio::{sync::Mutex, time};
+use crate::utils::Result;
 
-#[derive(Clone)]
 pub struct Pool {
-    count: Arc<Mutex<usize>>,
+    pub sender: Sender<PoolOp>,
+    pub watcher: Receiver<usize>,
 }
 
-impl Deref for Pool {
-    type Target = Arc<Mutex<usize>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.count
-    }
+pub enum PoolOp {
+    Attach = -1,
+    Dettach = 1,
 }
 
 impl Pool {
-    pub fn new(count: usize) -> Self {
-        let count = Arc::new(Mutex::new(count));
-        Self { count }
-    }
+    pub fn new() -> Result<Self> {
+        let (sender, mut rx) = mpsc::channel::<PoolOp>(1);
+        let (tx, watcher) = watch::channel(0);
 
-    pub async fn attach(&self) -> Self {
-        let pool = self.clone();
+        tx.send(Handle::current().metrics().num_workers() - 1)?;
 
-        while_none! {{
-            time::sleep(Duration::from_millis(20)).await;
+        tokio::spawn(async move {
+            while let Some(op) = rx.recv().await {
+                tx.send_if_modified(|counter| {
+                    let result = counter.checked_add_signed(op as isize);
 
-            let mut count = pool.lock().await;
-            let status = count.checked_sub(1);
+                    match result {
+                        Some(c) => *counter = c,
+                        None => (),
+                    }
 
-            match status {
-                Some(c) => *count = c,
-                None => (),
+                    result.is_some()
+                });
             }
 
-            status
-        }}
+            Result::Ok(())
+        });
 
-        pool
-    }
-
-    pub async fn detattch(&self) {
-        *self.lock().await += 1;
+        Ok(Self { sender, watcher })
     }
 }
