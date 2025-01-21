@@ -5,7 +5,7 @@ use indicatif::MultiProgress;
 use tokio::runtime::Builder;
 use wuwa_dl::{
     cli::Cli,
-    helper::ResourceHelper,
+    helper::{resource::ResourceHelper, ResourceHelperExt},
     json::{index::IndexJson, resource::ResourceJson},
     pool::{Pool, PoolOp},
     utils::{Result, INDEX_JSON_URL},
@@ -57,14 +57,11 @@ fn main() -> Result<()> {
             sender.send(PoolOp::Attach).await?;
 
             tasks.push(rt.spawn(async move {
-                let helper = ResourceHelper::new(resource)
+                let helper = ResourceHelper::new(resource, &base_url, dest_dir.to_str().unwrap())
                     .with_progress_bar()
                     .with_multi_progress(mp);
 
-                wuwa_dl::while_err! {
-                    helper.download(&base_url, dest_dir.to_str().unwrap()).await
-                };
-
+                wuwa_dl::while_err! { helper.download().await }
                 sender.send(PoolOp::Dettach).await
             }));
         }
