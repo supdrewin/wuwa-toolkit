@@ -1,18 +1,18 @@
+use wuwa_dl::prelude::*;
+
 use std::{env, sync::Arc};
 
 use console::Term;
 use indicatif::MultiProgress;
 use tokio::runtime::Builder;
-use wuwa_dl::{
-    cli::Cli,
-    helper::{resource::ResourceHelper, ResourceHelperExt},
-    json::{index::IndexJson, resource::ResourceJson},
-    pool::{Pool, PoolOp},
-    utils::{Result, INDEX_JSON_URL},
-};
 
-fn main() -> Result<()> {
+fn main() -> DynResult<()> {
     let mut rt = Builder::new_multi_thread();
+
+    if env::args().count() == 1 {
+        todo!();
+    }
+
     let cli = Cli::new();
 
     let rt = match cli.threads {

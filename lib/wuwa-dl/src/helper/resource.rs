@@ -1,9 +1,4 @@
-use std::{fmt::Write, path::Path};
-
-use indicatif::{MultiProgress, ProgressBar, ProgressState, ProgressStyle};
-
-use super::{ResourceHelperBase, ResourceHelperExt};
-use crate::{json::resource::Resource, utils::PROGRESS_STYLE};
+use crate::prelude::*;
 
 pub struct ResourceHelper {
     inner: Resource,

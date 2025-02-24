@@ -1,23 +1,38 @@
-# WuWa Downloader
+# WuWa Toolkit
 
-### What's this
+## What's this
 
-This is a CLI program aim to download `Wuthering Waves` in parallel!
+WuWa Toolkit contains various useful tools for `Wuthering Waves`.
 
-### How to use
+- a multifunctional CLI program aim to download resources in parallel
+- an alternative launcher with simple and beautiful GUI
 
-1. Download the latest executable [here](https://github.com/supdrewin/wuwa-downloader/releases).
+## How to use
 
-2. Run the program directly or pass the arguments to program:
+### WuWa Downloader
 
-    - use `--mirror/-m` to specify the index of CDN from list
-    - use `--threads/-t` to specify the number of download threads
-    - use `--path/-p` to specify the game download directory
-    - use `--global/-g` to download resources for the global version
-    - use `--beta/-b` to download resources from BETA channel
-    - use `--help/-h` to show the usage of this program
-    - use `--version/-V` to show the version of this program
+1. Download the latest executable [here](https://github.com/supdrewin/wuwa-toolkit/releases).
 
-### Support me
+2. You have two options this step:
+
+   - Double-click / Run the program directly (interactive).
+
+   - Pass following arguments to program (advanced):
+
+     |   Long    | Short |                Description                |
+     |-----------|-------|-------------------------------------------|
+     | --mirror  |  -m   | specify the index of CDN from list        |
+     | --threads |  -t   | specify the number of download threads    |
+     | --path    |  -p   | specify the game download directory       |
+     | --global  |  -g   | download resources for the Global version |
+     | --beta    |  -b   | download resources from Beta channel      |
+     | --help    |  -h   | show the usage of this program            |
+     | --version |  -V   | show the version of this program          |
+
+### WuWa Launcher (WIP)
+
+TODO
+
+## Support me
 
 Please stars my projects. Thanks!
