@@ -1,18 +1,18 @@
+use wuwa_dl::prelude::*;
+
 use std::{env, sync::Arc};
 
 use console::Term;
 use indicatif::MultiProgress;
 use tokio::runtime::Builder;
-use wuwa_dl::{
-    cli::Cli,
-    helper::{resource::ResourceHelper, ResourceHelperExt},
-    json::{index::IndexJson, resource::ResourceJson},
-    pool::{Pool, PoolOp},
-    utils::{Result, INDEX_JSON_URL},
-};
 
-fn main() -> Result<()> {
+fn main() -> DynResult<()> {
     let mut rt = Builder::new_multi_thread();
+
+    if env::args().count() == 1 {
+        unimplemented!();
+    }
+
     let cli = Cli::new();
 
     let rt = match cli.threads {
@@ -53,8 +53,8 @@ fn main() -> Result<()> {
             let sender = pool.sender.clone();
             let mp = mp.clone();
 
-            pool.watcher.changed().await?;
-            sender.send(PoolOp::Attach).await?;
+            wuwa_dl::while_err! { pool.watcher.changed().await }
+            wuwa_dl::while_err! { sender.send(PoolOp::Attach).await }
 
             tasks.push(rt.spawn(async move {
                 let helper = ResourceHelper::new(resource, &base_url, dest_dir.to_str().unwrap())
@@ -62,11 +62,11 @@ fn main() -> Result<()> {
                     .with_multi_progress(mp);
 
                 wuwa_dl::while_err! { helper.download().await }
-                sender.send(PoolOp::Dettach).await
+                wuwa_dl::while_err! { sender.send(PoolOp::Dettach).await }
             }));
         }
 
-        wuwa_dl::wait_all!(tasks, 2);
+        wuwa_dl::wait_all!(tasks, 1);
 
         println!("All the resources are downloaded!");
         println!("Press any key to continue...");

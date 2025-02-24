@@ -1,23 +1,25 @@
 [workspace]
+resolver = "3"
 members = ["lib/*", "wuwa-downloader", "wuwa-launcher"]
-resolver = "2"
+default-members = ["wuwa-downloader"]
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 license = "MIT"
+version = "0.12.0"
 authors = ["Alvin Null <supdrewin@outlook.com>"]
-repository = "https://github.com/supdrewin/wuwa-downloader/"
+repository = "https://github.com/supdrewin/wuwa-toolkit/"
 
 [workspace.dependencies]
-clap = { version = "4.5", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 console = "0.15"
 futures-util = "0.3"
-indicatif = { git = "https://github.com/console-rs/indicatif" }       # BUG
+indicatif = "0.17"
 md-5 = "0.10"
 relm4 = { version = "0.9", features = ["libadwaita"] }
 reqwest = { version = "0.12", features = ["gzip", "json", "stream"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = { version = "1.42", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
 wuwa-dl = { path = "lib/wuwa-dl" }
 wuwa-macro-derive = { path = "lib/wuwa-macro-derive" }

@@ -1,4 +1,4 @@
-use std::{error::Error, ops::Not};
+use crate::prelude::*;
 
 pub const PROGRESS_STYLE: &str = r"{spinner:.green} {file_name:40} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes}";
 pub const INDEX_JSON_URL: [&str; 4] = [
@@ -9,10 +9,10 @@ pub const INDEX_JSON_URL: [&str; 4] = [
 ];
 
 pub type Boolean = u8;
-pub type Result<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
+pub type DynResult<T> = Result<T, Box<dyn Error + Send + Sync>>;
 
 pub trait AsBoolean {
-    fn as_boolean(self: Self) -> Result<bool>
+    fn as_boolean(self: Self) -> DynResult<bool>
     where
         Self: TryInto<u8>,
         <Self as TryInto<u8>>::Error: 'static + Error + Send + Sync,

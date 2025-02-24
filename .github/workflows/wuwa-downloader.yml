@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Build
         run: |
-          cargo b -r --bin wuwa-downloader
+          cargo b -r
           cp target/release/*.exe
           get-filehash *.exe | foreach-object {
             $_.hash.tolower(),$(split-path $_.path -leaf) -join '  '

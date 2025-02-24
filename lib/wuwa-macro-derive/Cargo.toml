@@ -1,11 +1,11 @@
 [package]
 name = "wuwa-macro-derive"
-version = "0.11.0"
-authors = ["Alvin Null <supdrewin@outlook.com>"]
-edition = "2021"
-description = "Derive macros for WuWa Downloader"
-repository = "https://github.com/supdrewin/wuwa-downloader/"
-license = "MIT"
+description = "Derive macros for WuWa Toolkit"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
 
 [lib]
 proc-macro = true

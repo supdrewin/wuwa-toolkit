@@ -1,20 +1,8 @@
-pub mod resource;
-
-use std::{fs::File, io, path::Path, time::Duration};
-
-use futures_util::StreamExt;
-use indicatif::ProgressBar;
-use md5::{Digest, Md5};
-use tokio::{
-    fs::{self, File as AsyncFile},
-    io::AsyncWriteExt,
-};
-
-use crate::utils::Result;
+use crate::prelude::*;
 
 #[allow(async_fn_in_trait)]
 pub trait ResourceHelperExt: ResourceHelperBase {
-    async fn download(&self) -> Result<()> {
+    async fn download(&self) -> DynResult<()> {
         fs::create_dir_all(self.download_dest().parent().unwrap()).await?;
 
         while match self.verify() {
@@ -59,7 +47,7 @@ pub trait ResourceHelperBase {
         }
     }
 
-    fn verify(&self) -> Result<bool> {
+    fn verify(&self) -> DynResult<bool> {
         let mut file = File::open(self.download_dest())?;
         let mut hasher = Md5::new();
 
@@ -76,3 +64,5 @@ pub trait ResourceHelperBase {
         Ok(format!("{hash:02x}").eq(self.md5()))
     }
 }
+
+pub mod resource;

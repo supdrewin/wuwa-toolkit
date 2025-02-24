@@ -1,12 +1,4 @@
-use tokio::{
-    runtime::Handle,
-    sync::{
-        mpsc::{self, Sender},
-        watch::{self, Receiver},
-    },
-};
-
-use crate::utils::Result;
+use crate::prelude::*;
 
 pub struct Pool {
     pub sender: Sender<PoolOp>,
@@ -19,7 +11,7 @@ pub enum PoolOp {
 }
 
 impl Pool {
-    pub fn new() -> Result<Self> {
+    pub fn new() -> DynResult<Self> {
         let (sender, mut rx) = mpsc::channel::<PoolOp>(1);
         let (tx, watcher) = watch::channel(0);
 
@@ -39,7 +31,7 @@ impl Pool {
                 });
             }
 
-            Result::Ok(())
+            DynResult::Ok(())
         });
 
         Ok(Self { sender, watcher })
