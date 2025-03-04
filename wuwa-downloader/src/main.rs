@@ -10,7 +10,7 @@ fn main() -> DynResult<()> {
     let mut rt = Builder::new_multi_thread();
 
     if env::args().count() == 1 {
-        todo!();
+        unimplemented!();
     }
 
     let cli = Cli::new();

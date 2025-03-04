@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::private::*;
 
 pub struct ResourceHelper {
     inner: Resource,

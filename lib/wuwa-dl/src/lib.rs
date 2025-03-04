@@ -4,11 +4,7 @@ pub mod prelude {
         helper::{ResourceHelperExt, resource::ResourceHelper},
         json::{index::IndexJson, resource::ResourceJson},
         pool::{Pool, PoolOp},
-        utils::{AsBoolean, Boolean, DynResult, INDEX_JSON_URL, Volatile},
-    };
-
-    pub(crate) use crate::{
-        helper::ResourceHelperBase, json::resource::Resource, utils::PROGRESS_STYLE,
+        utils::{AsBoolean, Boolean, DynResult, INDEX_JSON_URL},
     };
 
     pub(crate) use std::{
@@ -31,6 +27,13 @@ pub mod prelude {
     pub(crate) use md5::{Digest, Md5};
     pub(crate) use serde::{Deserialize, Serialize};
     pub(crate) use serde_json::Value;
+}
+
+pub mod private {
+    pub use crate::{
+        helper::ResourceHelperBase, json::resource::Resource, utils::PROGRESS_STYLE,
+        utils::Volatile,
+    };
 }
 
 mod cli;
