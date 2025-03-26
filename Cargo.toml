@@ -15,11 +15,13 @@ clap = { version = "4", features = ["derive"] }
 console = "0.15"
 futures-util = "0.3"
 indicatif = "0.17"
+iocraft = "0.7"
 md-5 = "0.10"
 relm4 = { version = "0.9", features = ["libadwaita"] }
 reqwest = { version = "0.12", features = ["gzip", "json", "stream"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+smol = "2"
 tokio = { version = "1", features = ["full"] }
 wuwa-dl = { path = "lib/wuwa-dl" }
 wuwa-macro-derive = { path = "lib/wuwa-macro-derive" }

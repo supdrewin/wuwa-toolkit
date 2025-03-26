@@ -10,7 +10,9 @@ repository.workspace = true
 [dependencies]
 console.workspace = true
 indicatif.workspace = true
+iocraft.workspace = true
 reqwest.workspace = true
+smol.workspace = true
 tokio.workspace = true
 wuwa-dl.workspace = true
 wuwa-macro-derive.workspace = true

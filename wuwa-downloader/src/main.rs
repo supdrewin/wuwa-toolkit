@@ -1,3 +1,4 @@
+use iocraft::prelude::*;
 use wuwa_dl::prelude::*;
 
 use std::{env, sync::Arc};
@@ -8,12 +9,109 @@ use tokio::runtime::Builder;
 
 fn main() -> DynResult<()> {
     let mut rt = Builder::new_multi_thread();
+    let mut cli = Cli::new();
 
     if env::args().count() == 1 {
-        unimplemented!();
-    }
+        #[derive(Default, Props)]
+        struct Props<'a> {
+            global: Option<&'a mut bool>,
+            beta: Option<&'a mut bool>,
+        }
 
-    let cli = Cli::new();
+        impl<'a> Props<'a> {
+            fn server_switch(&self) -> String {
+                match self.global {
+                    Some(&mut global) => {
+                        let (cn, os) = if global { (" ", "*") } else { ("*", " ") };
+                        format!("  Server Type:   CN [{cn}]   OS [{os}]")
+                    }
+                    None => todo!(),
+                }
+            }
+
+            fn resource_switch(&self) -> String {
+                match self.beta {
+                    Some(&mut beta) => {
+                        let (live, beta) = if beta { (" ", "*") } else { ("*", " ") };
+                        format!("Resource Type: LIVE [{live}] Beta [{beta}]")
+                    }
+                    None => todo!(),
+                }
+            }
+        }
+
+        #[component]
+        fn Prompt<'a>(props: &mut Props<'a>, mut hooks: Hooks) -> impl Into<AnyElement<'static>> {
+            let mut system = hooks.use_context_mut::<SystemContext>();
+            let mut finished = hooks.use_state(|| false);
+
+            let mut server_switch = hooks.use_state(|| **props.global.as_ref().unwrap());
+            let mut resource_switch = hooks.use_state(|| **props.beta.as_ref().unwrap());
+
+            hooks.use_terminal_events(move |event| match event {
+                TerminalEvent::Key(KeyEvent { code, kind, .. })
+                    if kind != KeyEventKind::Release =>
+                {
+                    match code {
+                        KeyCode::Char('r') => resource_switch.set(!resource_switch.get()),
+                        KeyCode::Char('s') => server_switch.set(!server_switch.get()),
+                        KeyCode::Char('x') => finished.set(true),
+                        _ => (),
+                    }
+                }
+                _ => (),
+            });
+
+            if let Some(global) = props.global.as_mut() {
+                **global = server_switch.get();
+            }
+
+            if let Some(beta) = props.beta.as_mut() {
+                **beta = resource_switch.get();
+            }
+
+            finished.get().then(|| system.exit());
+
+            element! {
+                View(
+                    align_items: AlignItems::Center,
+                    border_color: Color::Cyan,
+                    border_style: BorderStyle::Round,
+                    flex_direction: FlexDirection::Column,
+                ) {
+                    View(margin_top: -1) {
+                        Text(content: " WuWa Downloader ", wrap: TextWrap::NoWrap)
+                    }
+
+                    View(
+                        flex_direction: FlexDirection::Column,
+                        margin: 1,
+                    ) {
+                        View {
+                            Text(content: props.server_switch())
+                        }
+
+                        View {
+                            Text(content: props.resource_switch())
+                        }
+
+                    }
+
+                    View(margin_bottom: -1) {
+                        Text(content: " [S]erver [R]esource e[X]it ", wrap: TextWrap::NoWrap)
+                    }
+                }
+            }
+        }
+
+        smol::block_on(
+            element!(Prompt(
+                global: &mut cli.global,
+                beta: &mut cli.beta,
+            ))
+            .render_loop(),
+        )?;
+    }
 
     let rt = match cli.threads {
         Some(threads) => rt.worker_threads(threads),
